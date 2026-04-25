@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA 配置 -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="成长小助手">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- 图标配置 - 使用emoji作为临时图标 -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+    
+    <title>成长小助手 - 小学生打卡工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .header .stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            min-width: 90px;
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .stat-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            white-space: nowrap;
+        }
+
+        .nav-tab:active {
+            background: #e0e0e0;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-category {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .task-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+
+        .task-card:active {
+            transform: scale(0.98);
+        }
+
+        .task-card.completed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .task-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .difficulty {
+            display: flex;
+            gap: 2px;
+        }
+
+        .points {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .streak-info {
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .time-info {
+            color: #666;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .streak-display {
+            margin: 12px 0 0 0;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #eee;
+        }
+
+        .streak-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .streak-days {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .day-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .day-dot.completed {
+            background: #4caf50;
+            color: white;
+        }
+
+        .day-dot.today {
+            border: 2px solid #667eea;
+        }
+
+        .next-reward {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .next-reward strong {
+            color: #ff6b6b;
+        }
+
+        .check-button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .check-button:active:not(:disabled) {
+            transform: scale(0.95);
+            background: #45a049;
+        }
+
+        .check-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .add-task-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .add-task-btn:active {
+            transform: scale(0.98);
+            background: #5568d3;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="time"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .difficulty-option {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .difficulty-option:active {
+            transform: scale(0.98);
+        }
+
+        .difficulty-option.selected {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .difficulty-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .difficulty-option span {
+            font-size: 14px;
+        }
+
+        .reward-preview {
+            background: #f5f7ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .reward-preview div {
+            margin: 4px 0;
+            color: #666;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+            background: #d0d0d0;
+        }
+
+        .reward-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .reward-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .reward-card:active {
+            transform: scale(0.98);
+        }
+
+        .reward-info {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .reward-points {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d84315;
+            margin-bottom: 5px;
+        }
+
+        .reward-name {
+            font-size: 15px;
+            color: #333;
+            word-wrap: break-word;
+        }
+
+        .reward-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .redeem-button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .redeem-button:active:not(:disabled) {
+            transform: scale(0.95);
+            background: #ff5252;
+        }
+
+        .redeem-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .edit-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-edit:active {
+            background: #1976d2;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-delete:active {
+            background: #d32f2f;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+
+        .stat-card .big-number {
+            font-size: 40px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .achievements {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .achievement-badge {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .achievement-badge:active {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .achievement-badge.locked {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+
+        .badge-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .badge-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .badge-desc {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+            margin: auto;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 18px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:active {
+            color: #333;
+        }
+
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px 40px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            z-index: 2000;
+            animation: celebrate 1s ease-out;
+            pointer-events: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 80%;
+            text-align: center;
+        }
+
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .weekday-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .weekday-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .weekday-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .weekday-option span {
+            font-size: 14px;
+        }
+
+        .history-section {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .history-section h3 {
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .history-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-date {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .history-points {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 56px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* 安装提示 */
+        .install-prompt {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+
+        .install-prompt button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 安装提示 -->
+    <div id="installPrompt" class="install-prompt">
+        <p>📱 将"成长小助手"添加到主屏幕，像App一样使用！</p>
+        <button onclick="showInstallInstructions()">查看教程</button>
+        <button onclick="dismissInstallPrompt()" style="background: transparent; color: white; border: 1px solid white;">暂不</button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌟 成长小助手 🌟</h1>
+            <p>坚持每一天，成就更好的自己！</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="label">总积分</div>
+                    <div class="value" id="totalPoints">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">今日完成</div>
+                    <div class="value" id="todayCompleted">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">最长连续</div>
+                    <div class="value" id="maxStreak">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('daily')">📝 每日打卡</button>
+            <button class="nav-tab" onclick="switchTab('manage')">⚙️ 任务管理</button>
+            <button class="nav-tab" onclick="switchTab('rewards')">🎁 奖励商城</button>
+            <button class="nav-tab" onclick="switchTab('stats')">📊 成长统计</button>
+        </div>
+
+        <div class="content">
+            <div id="daily-tab" class="tab-content active">
+                <div id="dailyTasksContainer"></div>
+            </div>
+
+            <div id="manage-tab" class="tab-content">
+                <div class="task-category">
+                    <div class="category-header">📚 学习任务</div>
+                    <div id="studyTasksList"></div>
+                    <button class="add-task-btn" onclick="openAddTaskModal('study')">+ 添加学习任务</button>
+                </div>
+
+                <div class="task-category">
+                    <div class="category-header">🏠 生活习惯</div>
+                    <div id="lifeTasksList"></div>
+                    <button class="add-task-btn" onclick="openAddTaskModal('life')">+ 添加生活习惯</button>
+                </div>
+
+                <div class="task-category">
+                    <div class="category-header">🎨 兴趣培养</div>
+                    <div id="hobbyTasksList"></div>
+                    <button class="add-task-btn" onclick="openAddTaskModal('hobby')">+ 添加兴趣培养</button>
+                </div>
+            </div>
+
+            <div id="rewards-tab" class="tab-content">
+                <h2 style="margin-bottom: 15px; font-size: 20px;">🎁 奖励商城</h2>
+                <div id="rewardsList" class="reward-list"></div>
+                <button class="add-task-btn" onclick="openAddRewardModal()">+ 添加新奖励</button>
+            </div>
+
+            <div id="stats-tab" class="tab-content">
+                <h2 style="margin-bottom: 15px; font-size: 20px;">📊 成长数据</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>🏆 最长连续记录</h3>
+                        <div id="longestStreakTask">暂无数据</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>💰 本月获得积分</h3>
+                        <div class="big-number" id="monthPoints">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>✅ 累计完成任务</h3>
+                        <div class="big-number" id="totalCompleted">0</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 25px 0 12px 0; font-size: 18px;">🏅 成就徽章</h3>
+                <div class="achievements" id="achievementsList"></div>
+
+                <div class="history-section">
+                    <h3>📅 最近打卡记录</h3>
+                    <div id="recentHistory"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="taskModalTitle">添加任务</span>
+                <span class="close-modal" onclick="closeTaskModal()">&times;</span>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <div class="form-group">
+                    <label>任务名称 *</label>
+                    <input type="text" id="taskName" placeholder="例如：完成数学作业" required>
+                </div>
+
+                <div class="form-group">
+                    <label>任务分类</label>
+                    <input type="hidden" id="taskCategory">
+                    <div id="taskCategoryDisplay" style="padding: 10px; background: #f5f5f5; border-radius: 5px; font-weight: bold; font-size: 14px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>难度等级 *</label>
+                    <div class="radio-group">
+                        <label class="difficulty-option" onclick="selectDifficulty(1)">
+                            <input type="radio" name="difficulty" value="1" id="diff1" checked>
+                            <span>⭐ 一星 - 10分/次</span>
+                        </label>
+                        <label class="difficulty-option" onclick="selectDifficulty(2)">
+                            <input type="radio" name="difficulty" value="2" id="diff2">
+                            <span>⭐⭐ 二星 - 30分/次 (连续奖励×2)</span>
+                        </label>
+                        <label class="difficulty-option" onclick="selectDifficulty(3)">
+                            <input type="radio" name="difficulty" value="3" id="diff3">
+                            <span>⭐⭐⭐ 三星 - 50分/次 (连续奖励×3)</span>
+                        </label>
+                    </div>
+                    <div class="reward-preview" id="rewardPreview">
+                        <strong>📊 连续打卡奖励预览：</strong>
+                        <div>• 连续3天：+10分</div>
+                        <div>• 连续7天：+30分</div>
+                        <div>• 连续14天：+60分</div>
+                        <div>• 连续30天：+150分</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>提醒时间</label>
+                    <input type="time" id="taskTime" value="18:00">
+                </div>
+
+                <div class="form-group">
+                    <label>重复设置（选择需要完成此任务的日期）</label>
+                    <div class="weekday-selector">
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day1" value="1" checked>
+                            <span>周一</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day2" value="2" checked>
+                            <span>周二</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day3" value="3" checked>
+                            <span>周三</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day4" value="4" checked>
+                            <span>周四</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day5" value="5" checked>
+                            <span>周五</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day6" value="6">
+                            <span>周六</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" id="day0" value="0">
+                            <span>周日</span>
+                        </label>
+                    </div>
+                </div>
+
+                <input type="hidden" id="taskId">
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">保存</button>
+                    <button type="button" class="btn-secondary" onclick="closeTaskModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="rewardModalTitle">添加奖励</span>
+                <span class="close-modal" onclick="closeRewardModal()">&times;</span>
+            </div>
+            <form id="rewardForm" onsubmit="saveReward(event)">
+                <div class="form-group">
+                    <label>所需积分 *</label>
+                    <input type="number" id="rewardPoints" min="1" placeholder="例如：100" required>
+                </div>
+
+                <div class="form-group">
+                    <label>奖励内容 *</label>
+                    <input type="text" id="rewardName" placeholder="例如：买一本喜欢的课外书" required>
+                </div>
+
+                <input type="hidden" id="rewardId">
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">保存</button>
+                    <button type="button" class="btn-secondary" onclick="closeRewardModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let appData = {
+            tasks: [],
+            rewards: [],
+            totalPoints: 0,
+            history: [],
+            completedToday: [],
+            lastCheckDate: ''
+        };
+
+        const streakRewards = {
+            1: { 3: 10, 7: 30, 14: 60, 30: 150 },
+            2: { 3: 20, 7: 60, 14: 120, 30: 300 },
+            3: { 3: 30, 7: 90, 14: 180, 30: 450 }
+        };
+
+        let deferredPrompt;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            checkNewDay();
+            updateAllDisplays();
+            checkInstallPrompt();
+        });
+
+        // PWA 安装提示
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (!localStorage.getItem('installPromptDismissed')) {
+                document.getElementById('installPrompt').classList.add('show');
+            }
+        });
+
+        function checkInstallPrompt() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            
+            if (isStandalone) {
+                document.getElementById('installPrompt').style.display = 'none';
+            } else if (!localStorage.getItem('installPromptDismissed')) {
+                setTimeout(() => {
+                    document.getElementById('installPrompt').classList.add('show');
+                }, 3000);
+            }
+        }
+
+        function showInstallInstructions() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            
+            let message = '';
+            
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('用户接受了安装');
+                    }
+                    deferredPrompt = null;
+                });
+                document.getElementById('installPrompt').classList.remove('show');
+            } else if (isIOS) {
+                message = '📱 iOS安装步骤：\n\n1. 点击底部的"分享"按钮 📤\n2. 向下滚动找到"添加到主屏幕"\n3. 点击"添加"即可\n\n完成后就能像App一样使用了！';
+                alert(message);
+            } else if (isAndroid) {
+                message = '📱 Android安装步骤：\n\n1. 点击浏览器菜单（三个点）\n2. 选择"添加到主屏幕"或"安装应用"\n3. 点击"添加"或"安装"\n\n完成后就能像App一样使用了！';
+                alert(message);
+            } else {
+                message = '📱 安装步骤：\n\n1. 点击浏览器菜单\n2. 选择"添加到主屏幕"或"安装"\n3. 确认添加\n\n完成后就能像App一样使用了！';
+                alert(message);
+            }
+        }
+
+        function dismissInstallPrompt() {
+            document.getElementById('installPrompt').classList.remove('show');
+            localStorage.setItem('installPromptDismissed', 'true');
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('studentCheckInData');
+            if (saved) {
+                appData = JSON.parse(saved);
+            } else {
+                addSampleData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('studentCheckInData', JSON.stringify(appData));
+        }
+
+        function addSampleData() {
+            appData.tasks = [
+                {
+                    id: Date.now() + 1,
+                    name: '完成数学作业',
+                    category: 'study',
+                    difficulty: 2,
+                    time: '18:00',
+                    weekdays: [1,2,3,4,5],
+                    streak: 0,
+                    lastCompleted: null,
+                    history: []
+                },
+                {
+                    id: Date.now() + 2,
+                    name: '早上7点前起床',
+                    category: 'life',
+                    difficulty: 1,
+                    time: '06:50',
+                    weekdays: [1,2,3,4,5,6,0],
+                    streak: 0,
+                    lastCompleted: null,
+                    history: []
+                },
+                {
+                    id: Date.now() + 3,
+                    name: '练琴30分钟',
+                    category: 'hobby',
+                    difficulty: 3,
+                    time: '19:00',
+                    weekdays: [1,2,3,4,5],
+                    streak: 0,
+                    lastCompleted: null,
+                    history: []
+                }
+            ];
+
+            appData.rewards = [
+                { id: Date.now() + 1, points: 100, name: '买一本喜欢的课外书' },
+                { id: Date.now() + 2, points: 300, name: '周末去电影院看电影' },
+                { id: Date.now() + 3, points: 500, name: '去游乐场玩半天' }
+            ];
+
+            saveData();
+        }
+
+        function checkNewDay() {
+            const today = getTodayString();
+            
+            if (appData.lastCheckDate && appData.lastCheckDate !== today) {
+                const yesterday = new Date(appData.lastCheckDate);
+                const todayDate = new Date(today);
+                const diffDays = Math.floor((todayDate - yesterday) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 1) {
+                    appData.tasks.forEach(task => {
+                        task.streak = 0;
+                    });
+                }
+                
+                appData.completedToday = [];
+            }
+            
+            appData.lastCheckDate = today;
+            saveData();
+        }
+
+        function getTodayString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            if (tabName === 'daily') renderDailyTasks();
+            else if (tabName === 'manage') renderManageTasks();
+            else if (tabName === 'rewards') renderRewards();
+            else if (tabName === 'stats') renderStats();
+        }
+
+        function renderDailyTasks() {
+            const container = document.getElementById('dailyTasksContainer');
+            const today = new Date().getDay();
+            
+            const categories = {
+                study: { name: '📚 学习任务', tasks: [] },
+                life: { name: '🏠 生活习惯', tasks: [] },
+                hobby: { name: '🎨 兴趣培养', tasks: [] }
+            };
+
+            appData.tasks.forEach(task => {
+                if (task.weekdays.includes(today)) {
+                    categories[task.category].tasks.push(task);
+                }
+            });
+
+            let html = '';
+            let hasAnyTask = false;
+
+            for (let cat in categories) {
+                if (categories[cat].tasks.length > 0) {
+                    hasAnyTask = true;
+                    html += `<div class="task-category">
+                        <div class="category-header">${categories[cat].name}</div>
+                        <div class="task-list">`;
+                    
+                    categories[cat].tasks.forEach(task => {
+                        const isCompleted = appData.completedToday.includes(task.id);
+                        const points = getTaskPoints(task.difficulty);
+                        const stars = '⭐'.repeat(task.difficulty);
+                        
+                        html += `<div class="task-card ${isCompleted ? 'completed' : ''}">
+                            <div class="task-header">
+                                <div class="task-info">
+                                    <div class="task-name">${task.name}</div>
+                                    <div class="task-meta">
+                                        <div class="difficulty">${stars}</div>
+                                        <div class="points">${points}分/次</div>
+                                        ${task.streak > 0 ? `<div class="streak-info">🔥 连续${task.streak}天</div>` : ''}
+                                        <div class="time-info">⏰ ${task.time}</div>
+                                    </div>
+                                </div>
+                                <button class="check-button" onclick="completeTask(${task.id})" ${isCompleted ? 'disabled' : ''}>
+                                    ${isCompleted ? '✓ 已完成' : '打卡'}
+                                </button>
+                            </div>`;
+                        
+                        if (task.streak > 0 || task.history.length > 0) {
+                            html += renderStreakDisplay(task);
+                        }
+                        
+                        html += `</div>`;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+            }
+
+            if (!hasAnyTask) {
+                html = `<div class="empty-state">
+                    <div class="empty-state-icon">📅</div>
+                    <p>今天没有安排任务哦！</p>
+                    <p style="font-size: 13px; margin-top: 8px;">去"任务管理"添加新任务吧</p>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderStreakDisplay(task) {
+            const nextReward = getNextStreakReward(task);
+            let html = `<div class="streak-display">
+                <div class="streak-title">📊 连续打卡进度</div>
+                <div class="streak-days">`;
+            
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const isCompleted = task.history.some(h => h.date === dateStr);
+                const isToday = i === 0;
+                
+                html += `<div class="day-dot ${isCompleted ? 'completed' : ''} ${isToday ? 'today' : ''}" title="${dateStr}">
+                    ${isCompleted ? '✓' : ''}
+                </div>`;
+            }
+            
+            html += `</div>`;
+            
+            if (nextReward) {
+                html += `<div class="next-reward">
+                    下一个奖励：连续<strong>${nextReward.days}天</strong> → <strong>+${nextReward.points}分</strong> 
+                    (还差<strong>${nextReward.days - task.streak}天</strong>)
+                </div>`;
+            }
+            
+            if (task.streak >= 30) {
+                html += `<div class="next-reward" style="color: #4caf50;">
+                    🎉 已达成最高连续记录！继续保持！
+                </div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        function getNextStreakReward(task) {
+            const rewards = streakRewards[task.difficulty];
+            for (let days in rewards) {
+                if (task.streak < parseInt(days)) {
+                    return { days: parseInt(days), points: rewards[days] };
+                }
+            }
+            return null;
+        }
+
+        function completeTask(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const today = getTodayString();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            if (task.lastCompleted === yesterdayStr) {
+                task.streak++;
+            } else if (task.lastCompleted !== today) {
+                task.streak = 1;
+            }
+
+            let earnedPoints = getTaskPoints(task.difficulty);
+            let bonusPoints = 0;
+            
+            const rewards = streakRewards[task.difficulty];
+            if (rewards[task.streak]) {
+                bonusPoints = rewards[task.streak];
+                earnedPoints += bonusPoints;
+                showCelebration(`🎉 连续${task.streak}天！额外获得${bonusPoints}分！`);
+            } else {
+                showCelebration(`✨ 完成任务！+${earnedPoints}分`);
+            }
+
+            task.lastCompleted = today;
+            task.history.push({ date: today, points: earnedPoints });
+            appData.completedToday.push(taskId);
+            appData.totalPoints += earnedPoints;
+            appData.history.push({
+                date: today,
+                taskName: task.name,
+                points: earnedPoints,
+                streak: task.streak
+            });
+
+            saveData();
+            updateAllDisplays();
+        }
+
+        function getTaskPoints(difficulty) {
+            const points = { 1: 10, 2: 30, 3: 50 };
+            return points[difficulty];
+        }
+
+        function showCelebration(text) {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.textContent = text;
+            document.body.appendChild(celebration);
+            
+            setTimeout(() => {
+                celebration.remove();
+            }, 1000);
+        }
+
+        function renderManageTasks() {
+            renderTasksByCategory('study', 'studyTasksList');
+            renderTasksByCategory('life', 'lifeTasksList');
+            renderTasksByCategory('hobby', 'hobbyTasksList');
+        }
+
+        function renderTasksByCategory(category, containerId) {
+            const container = document.getElementById(containerId);
+            const tasks = appData.tasks.filter(t => t.category === category);
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 25px;"><p>还没有添加任务</p></div>';
+                return;
+            }
+
+            let html = '<div class="task-list">';
+            tasks.forEach(task => {
+                const points = getTaskPoints(task.difficulty);
+                const stars = '⭐'.repeat(task.difficulty);
+                const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+                const weekdayStr = task.weekdays.sort((a,b) => a-b).map(d => weekdayNames[d]).join('、');
+                
+                html += `<div class="task-card">
+                    <div class="task-header">
+                        <div class="task-info">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-meta">
+                                <div class="difficulty">${stars}</div>
+                                <div class="points">${points}分/次</div>
+                                <span class="time-info">⏰ ${task.time}</span>
+                                <span class="time-info">📅 周${weekdayStr}</span>
+                            </div>
+                        </div>
+                        <div class="edit-buttons">
+                            <button class="btn-edit" onclick="editTask(${task.id})">编辑</button>
+                            <button class="btn-delete" onclick="deleteTask(${task.id})">删除</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+
+        function openAddTaskModal(category) {
+            document.getElementById('taskModalTitle').textContent = '添加任务';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('taskCategory').value = category;
+            
+            const categoryNames = {
+                study: '📚 学习任务',
+                life: '🏠 生活习惯',
+                hobby: '🎨 兴趣培养'
+            };
+            document.getElementById('taskCategoryDisplay').textContent = categoryNames[category];
+            
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById('day' + i).checked = true;
+            }
+            document.getElementById('day6').checked = false;
+            document.getElementById('day0').checked = false;
+            
+            document.getElementById('diff1').checked = true;
+            selectDifficulty(1);
+            
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function editTask(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('taskModalTitle').textContent = '编辑任务';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskName').value = task.name;
+            document.getElementById('taskCategory').value = task.category;
+            
+            const categoryNames = {
+                study: '📚 学习任务',
+                life: '🏠 生活习惯',
+                hobby: '🎨 兴趣培养'
+            };
+            document.getElementById('taskCategoryDisplay').textContent = categoryNames[task.category];
+            
+            document.getElementById('diff' + task.difficulty).checked = true;
+            selectDifficulty(task.difficulty);
+            document.getElementById('taskTime').value = task.time;
+            
+            for (let i = 0; i <= 6; i++) {
+                document.getElementById('day' + i).checked = task.weekdays.includes(i);
+            }
+            
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('确定要删除这个任务吗？相关的打卡记录也会被删除。')) {
+                appData.tasks = appData.tasks.filter(t => t.id !== taskId);
+                appData.completedToday = appData.completedToday.filter(id => id !== taskId);
+                saveData();
+                renderManageTasks();
+                updateAllDisplays();
+            }
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+        }
+
+        function selectDifficulty(level) {
+            document.querySelectorAll('.difficulty-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('diff' + level).parentElement.classList.add('selected');
+            updateRewardPreview(level);
+        }
+
+        function updateRewardPreview(difficulty) {
+            if (!difficulty) {
+                difficulty = parseInt(document.querySelector('input[name="difficulty"]:checked').value);
+            }
+            const rewards = streakRewards[difficulty];
+            const multiplier = difficulty === 1 ? '' : difficulty === 2 ? ' (×2)' : ' (×3)';
+            
+            const preview = document.getElementById('rewardPreview');
+            preview.innerHTML = `
+                <strong>📊 连续打卡奖励预览${multiplier}：</strong>
+                <div>• 连续3天：+${rewards[3]}分</div>
+                <div>• 连续7天：+${rewards[7]}分</div>
+                <div>• 连续14天：+${rewards[14]}分</div>
+                <div>• 连续30天：+${rewards[30]}分</div>
+            `;
+        }
+
+        function saveTask(event) {
+            event.preventDefault();
+            
+            const taskId = document.getElementById('taskId').value;
+            const taskData = {
+                id: taskId ? parseInt(taskId) : Date.now(),
+                name: document.getElementById('taskName').value.trim(),
+                category: document.getElementById('taskCategory').value,
+                difficulty: parseInt(document.querySelector('input[name="difficulty"]:checked').value),
+                time: document.getElementById('taskTime').value,
+                weekdays: [],
+                streak: 0,
+                lastCompleted: null,
+                history: []
+            };
+
+            for (let i = 0; i <= 6; i++) {
+                if (document.getElementById('day' + i).checked) {
+                    taskData.weekdays.push(i);
+                }
+            }
+
+            if (taskData.weekdays.length === 0) {
+                alert('请至少选择一个重复日期！');
+                return;
+            }
+
+            if (taskId) {
+                const index = appData.tasks.findIndex(t => t.id === parseInt(taskId));
+                const oldTask = appData.tasks[index];
+                taskData.streak = oldTask.streak;
+                taskData.lastCompleted = oldTask.lastCompleted;
+                taskData.history = oldTask.history;
+                appData.tasks[index] = taskData;
+            } else {
+                appData.tasks.push(taskData);
+            }
+
+            saveData();
+            closeTaskModal();
+            renderManageTasks();
+            renderDailyTasks();
+            showCelebration('✓ 保存成功');
+        }
+
+        function renderRewards() {
+            const container = document.getElementById('rewardsList');
+            
+            if (appData.rewards.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎁</div><p>还没有添加奖励</p></div>';
+                return;
+            }
+
+            const sortedRewards = [...appData.rewards].sort((a, b) => a.points - b.points);
+            
+            let html = '';
+            sortedRewards.forEach(reward => {
+                const canRedeem = appData.totalPoints >= reward.points;
+                
+                html += `<div class="reward-card">
+                    <div class="reward-info">
+                        <div class="reward-points">${reward.points}分</div>
+                        <div class="reward-name">${reward.name}</div>
+                    </div>
+                    <div class="reward-actions">
+                        <button class="redeem-button" onclick="redeemReward(${reward.id})" ${!canRedeem ? 'disabled' : ''}>
+                            ${canRedeem ? '兑换' : '积分不足'}
+                        </button>
+                        <div class="edit-buttons">
+                            <button class="btn-edit" onclick="editReward(${reward.id})">编辑</button>
+                            <button class="btn-delete" onclick="deleteReward(${reward.id})">删除</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function redeemReward(rewardId) {
+            const reward = appData.rewards.find(r => r.id === rewardId);
+            if (!reward || appData.totalPoints < reward.points) return;
+
+            if (confirm(`确定要兑换"${reward.name}"吗？\n将消耗 ${reward.points} 积分。`)) {
+                appData.totalPoints -= reward.points;
+                appData.history.push({
+                    date: getTodayString(),
+                    taskName: '兑换奖励：' + reward.name,
+                    points: -reward.points,
+                    type: 'redeem'
+                });
+                
+                saveData();
+                updateAllDisplays();
+                showCelebration('🎁 兑换成功！');
+            }
+        }
+
+        function openAddRewardModal() {
+            document.getElementById('rewardModalTitle').textContent = '添加奖励';
+            document.getElementById('rewardForm').reset();
+            document.getElementById('rewardId').value = '';
+            document.getElementById('rewardModal').classList.add('active');
+        }
+
+        function editReward(rewardId) {
+            const reward = appData.rewards.find(r => r.id === rewardId);
+            if (!reward) return;
+
+            document.getElementById('rewardModalTitle').textContent = '编辑奖励';
+            document.getElementById('rewardId').value = reward.id;
+            document.getElementById('rewardPoints').value = reward.points;
+            document.getElementById('rewardName').value = reward.name;
+            document.getElementById('rewardModal').classList.add('active');
+        }
+
+        function deleteReward(rewardId) {
+            if (confirm('确定要删除这个奖励吗？')) {
+                appData.rewards = appData.rewards.filter(r => r.id !== rewardId);
+                saveData();
+                renderRewards();
+            }
+        }
+
+        function closeRewardModal() {
+            document.getElementById('rewardModal').classList.remove('active');
+        }
+
+        function saveReward(event) {
+            event.preventDefault();
+            
+            const rewardId = document.getElementById('rewardId').value;
+            const rewardData = {
+                id: rewardId ? parseInt(rewardId) : Date.now(),
+                points: parseInt(document.getElementById('rewardPoints').value),
+                name: document.getElementById('rewardName').value.trim()
+            };
+
+            if (rewardId) {
+                const index = appData.rewards.findIndex(r => r.id === parseInt(rewardId));
+                appData.rewards[index] = rewardData;
+            } else {
+                appData.rewards.push(rewardData);
+            }
+
+            saveData();
+            closeRewardModal();
+            renderRewards();
+            showCelebration('✓ 保存成功');
+        }
+
+        function renderStats() {
+            let longestStreak = { task: null, days: 0 };
+            appData.tasks.forEach(task => {
+                if (task.streak > longestStreak.days) {
+                    longestStreak = { task: task, days: task.streak };
+                }
+            });
+
+            const longestStreakEl = document.getElementById('longestStreakTask');
+            if (longestStreak.task) {
+                const stars = '⭐'.repeat(longestStreak.task.difficulty);
+                longestStreakEl.innerHTML = `
+                    <div style="font-size: 16px; margin-top: 8px;">${longestStreak.task.name}</div>
+                    <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">${stars}</div>
+                    <div class="big-number">${longestStreak.days}天</div>
+                `;
+            } else {
+                longestStreakEl.innerHTML = '<div style="font-size: 16px; margin-top: 15px;">暂无连续记录</div>';
+            }
+
+            const now = new Date();
+            const thisMonth = now.getMonth();
+            const thisYear = now.getFullYear();
+            let monthPoints = 0;
+            appData.history.forEach(h => {
+                const date = new Date(h.date);
+                if (date.getMonth() === thisMonth && date.getFullYear() === thisYear && h.points > 0) {
+                    monthPoints += h.points;
+                }
+            });
+            document.getElementById('monthPoints').textContent = monthPoints;
+
+            const totalCompleted = appData.history.filter(h => h.points > 0 && !h.type).length;
+            document.getElementById('totalCompleted').textContent = totalCompleted;
+
+            renderAchievements();
+            renderRecentHistory();
+        }
+
+        function renderAchievements() {
+            const achievements = [
+                { icon: '🥉', name: '青铜徽章', desc: '任意任务连续3天', check: () => appData.tasks.some(t => t.streak >= 3) },
+                { icon: '🥈', name: '白银徽章', desc: '任意任务连续7天', check: () => appData.tasks.some(t => t.streak >= 7) },
+                { icon: '🥇', name: '黄金徽章', desc: '任意任务连续14天', check: () => appData.tasks.some(t => t.streak >= 14) },
+                { icon: '💎', name: '钻石徽章', desc: '任意任务连续30天', check: () => appData.tasks.some(t => t.streak >= 30) },
+                { icon: '🌟', name: '积分达人', desc: '累计获得1000分', check: () => {
+                    const totalEarned = appData.history.filter(h => h.points > 0).reduce((sum, h) => sum + h.points, 0);
+                    return totalEarned >= 1000;
+                }},
+                { icon: '🏆', name: '坚持之星', desc: '三星任务连续14天', check: () => appData.tasks.some(t => t.difficulty === 3 && t.streak >= 14) }
+            ];
+
+            const container = document.getElementById('achievementsList');
+            let html = '';
+            
+            achievements.forEach(achievement => {
+                const unlocked = achievement.check();
+                html += `<div class="achievement-badge ${!unlocked ? 'locked' : ''}">
+                    <div class="badge-icon">${achievement.icon}</div>
+                    <div class="badge-name">${achievement.name}</div>
+                    <div class="badge-desc">${achievement.desc}</div>
+                    ${unlocked ? '<div style="color: #4caf50; margin-top: 5px; font-weight: bold; font-size: 12px;">✓ 已解锁</div>' : '<div style="color: #999; margin-top: 5px; font-size: 12px;">🔒 未解锁</div>'}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function renderRecentHistory() {
+            const container = document.getElementById('recentHistory');
+            const recentHistory = [...appData.history].reverse().slice(0, 15);
+            
+            if (recentHistory.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 25px;"><p>暂无打卡记录</p></div>';
+                return;
+            }
+
+            let html = '';
+            recentHistory.forEach(h => {
+                const date = new Date(h.date);
+                const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
+                const pointsStr = h.points > 0 ? `+${h.points}分` : `${h.points}分`;
+                const pointsColor = h.points > 0 ? '#4caf50' : '#f44336';
+                
+                html += `<div class="history-item">
+                    <div>
+                        <div class="history-date">${dateStr}</div>
+                        <div style="color: #666; font-size: 13px; margin-top: 3px;">${h.taskName}</div>
+                        ${h.streak && h.streak > 1 ? `<div style="color: #ff6b6b; font-size: 11px; margin-top: 3px;">🔥 连续${h.streak}天</div>` : ''}
+                    </div>
+                    <div class="history-points" style="color: ${pointsColor};">${pointsStr}</div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateAllDisplays() {
+            document.getElementById('totalPoints').textContent = appData.totalPoints;
+            document.getElementById('todayCompleted').textContent = appData.completedToday.length;
+            
+            const maxStreak = appData.tasks.length > 0 ? Math.max(...appData.tasks.map(t => t.streak)) : 0;
+            document.getElementById('maxStreak').textContent = maxStreak;
+
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                const tabId = activeTab.id;
+                if (tabId === 'daily-tab') renderDailyTasks();
+                else if (tabId === 'manage-tab') renderManageTasks();
+                else if (tabId === 'rewards-tab') renderRewards();
+                else if (tabId === 'stats-tab') renderStats();
+            }
+        }
+
+        // 点击模态框背景关闭
+        document.getElementById('taskModal').addEventListener('click', function(e) {
+            if (e.target === this) closeTaskModal();
+        });
+
+        document.getElementById('rewardModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRewardModal();
+        });
+    </script>
+
+    <!-- Service Worker 注册 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('✅ Service Worker 注册成功'))
+                    .catch(err => console.log('❌ Service Worker 注册失败:', err));
+            });
+        }
+    </script>
+</body>
+</html>
